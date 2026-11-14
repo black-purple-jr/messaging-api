@@ -1,12 +1,23 @@
 import express from "express";
-import authRouter from "./routes/auth.router.js"
+import authRouter from "@/routes/auth.router.js"
+import connectDatabase from "@/config/database.js";
+import dotenv from "dotenv";
+dotenv.config()
 
 const app = express();
+const PORT = process.env.PORT;
 
-app.listen(3000);
+app.use(express.json());
 
-app.get("/", (req, res) => {
-  console.log("test the dummy app")
-})
+async function startServer() {
+  await connectDatabase();
 
-app.get("/auth", authRouter);
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer();
+
+
+app.use("/auth", authRouter);

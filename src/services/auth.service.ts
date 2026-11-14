@@ -1,6 +1,6 @@
-import UserModel from "../models/User.model.js";
-import * as pwd from "../utils/password.js";
-import { generateAccessToken } from "../utils/jwt.js";
+import UserModel from "@/models/User.model.js";
+import * as pwd from "@/utils/password.js";
+import { generateAccessToken } from "@/utils/jwt.js";
 
 
 
