@@ -1,13 +1,13 @@
 import express from "express";
-import dotenv from "dotenv";
 import authRouter from "@/routes/auth.router.js"
 import connectDatabase from "@/config/database.js";
 import userRouter from "@/routes/user.router.js";
 import errorMiddleware from "@/middleware/error.middleware.js";
-dotenv.config()
+import authenticate from "@/middleware/auth.middleware.js";
+import { PORT } from "@/config/env.js";
 
 const app = express();
-const PORT = process.env.PORT;
+
 
 app.use(express.json());
 
@@ -25,13 +25,14 @@ async function startServer() {
 };
 
 app.use("/auth", authRouter);
-app.use("/u", userRouter);
+app.use("/u", authenticate, userRouter);
+
+
+app.get("/", (req, res) => {
+  res.json({ message: "Messaging API is running" });
+});
 
 
 app.use(errorMiddleware);
 
 startServer();
-
-app.get("/", (req, res) => {
-  res.json({ message: "Messaging API is running" });
-});
