@@ -1,6 +1,8 @@
 import UserModel from "@/models/User.model.js";
 import * as pwd from "@/utils/password.js";
-import { generateAccessToken } from "@/utils/jwt.js";
+import { generateAccessToken, generateRefreshToken } from "@/utils/jwt.js";
+import { hashToken } from "@/utils/token-hash.js";
+import RefreshTokenModel from "@/models/RefreshToken.model.js";
 
 
 
@@ -28,7 +30,7 @@ export async function registerUser(email: string, username: string, password: st
     lastName,
     displayName
   });
-  
+
 
   return {
     user: {
@@ -60,10 +62,12 @@ export async function loginUser(identifier: string, password: string) {
   if (!isPasswordValid) throw new Error("Invalid credentials");
 
   const accessToken: string = generateAccessToken(user._id.toString());
+  const refreshToken: string = generateRefreshToken(user._id.toString());
 
 
   return {
     accessToken: accessToken,
+    refreshToken: refreshToken,
     user: {
       id: user._id.toString(),
       username: user.username,
@@ -74,3 +78,20 @@ export async function loginUser(identifier: string, password: string) {
     }
   }
 };
+
+
+export async function refreshUser(refreshToken: string) {
+
+}
+
+
+export async function logoutUser(refreshToken: string) {
+  const tokenHash = hashToken(refreshToken);
+
+  await RefreshTokenModel.findOneAndUpdate({
+    tokenHash,
+    revokedAt: null,
+    expiresAt: { $gt: new Date() }
+  }, { $set: { revokedAt: new Date() } })
+
+}
