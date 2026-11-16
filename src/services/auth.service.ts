@@ -60,12 +60,10 @@ export async function loginUser(identifier: string, password: string) {
 
   const accessToken: string = generateAccessToken(user._id.toString());
   const refreshToken: string = generateRefreshToken(user._id.toString());
-  
+
   const tokenHash = hashToken(refreshToken);
 
-  const expiresAt = new Date(
-    Date.now() + 7 * 24 * 60 * 60 * 1000
-  );
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   await RefreshTokenModel.create({
     userId: user._id,
@@ -90,7 +88,38 @@ export async function loginUser(identifier: string, password: string) {
 export async function refreshUser(refreshToken: string) {
   const userId = verifyRefreshToken(refreshToken);
 
-  
+  const newAccessToken = generateAccessToken(userId);
+  const newRefreshToken = generateRefreshToken(userId);
+
+  const oldTokenHash = hashToken(refreshToken);
+  const oldToken = await RefreshTokenModel.findOneAndUpdate({
+    tokenHash: oldTokenHash,
+    userId,
+    revokedAt: null,
+    expiresAt: { $gt: new Date() }
+  },
+    { $set: { revokedAt: new Date() } },
+    { new: false }
+  );
+
+  if (!oldToken) {
+    throw new Error("Invalid refresh token");
+  }
+
+  const newRefreshTokenHash = hashToken(newRefreshToken);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await RefreshTokenModel.create({
+    userId,
+    tokenHash: newRefreshTokenHash,
+    expiresAt,
+  })
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken
+  }
+
 }
 
 

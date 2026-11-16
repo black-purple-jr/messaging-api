@@ -13,7 +13,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       req.body.displayName
     );
 
-    return res.status(200).json(result);
+    return res.status(201).json(result);
   } catch (error) {
     next(error);
   };
@@ -28,7 +28,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       req.body.password
     );
 
-    return res.status(201).json(result);
+    return res.status(200).json(result);
   } catch(error) {
     next(error)
   }
@@ -36,6 +36,22 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
 export async function refresh (req: Request, res: Response, next: NextFunction) {
 
+  try {
+    const { refreshToken } = req.body;
+
+    if (typeof refreshToken !== "string" || !refreshToken.trim()) {
+      return res.status(400).json({
+        message: "Refresh token is required"
+      });
+    }
+
+    const result = await refreshUser(req.body.refreshToken);
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+    next(error)
+  }
 
 
 };
