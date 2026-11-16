@@ -17,3 +17,13 @@ export function generateRefreshToken(userId: string): string {
     { expiresIn: "7d" }
   )
 }
+
+export function verifyRefreshToken(token: string): string {
+  const payload = jwt.verify(token, REFRESH_TOKEN_SECRET);
+
+  if (typeof payload === "string" || typeof payload.sub !== "string") {
+    throw new Error("Invalid refresh token");
+  }
+
+  return payload.sub;
+}

@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { registerUser, loginUser, logoutUser } from "@/services/auth.service.js";
+import { registerUser, loginUser, refreshUser, logoutUser } from "@/services/auth.service.js";
 
 
 
@@ -10,8 +10,6 @@ export async function register(req: Request, res: Response, next: NextFunction) 
       req.body.email,
       req.body.username,
       req.body.password,
-      req.body.firstName,
-      req.body.lastName,
       req.body.displayName
     );
 
