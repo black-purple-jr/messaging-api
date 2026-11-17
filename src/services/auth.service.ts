@@ -131,5 +131,4 @@ export async function logoutUser(refreshToken: string) {
     revokedAt: null,
     expiresAt: { $gt: new Date() }
   }, { $set: { revokedAt: new Date() } })
-
 }

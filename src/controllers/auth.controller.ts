@@ -17,8 +17,8 @@ export async function register(req: Request, res: Response, next: NextFunction) 
   } catch (error) {
     next(error);
   };
+}
 
-};
 
 export async function login(req: Request, res: Response, next: NextFunction) {
   
@@ -32,19 +32,12 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   } catch(error) {
     next(error)
   }
-};
+}
+
 
 export async function refresh (req: Request, res: Response, next: NextFunction) {
 
   try {
-    const { refreshToken } = req.body;
-
-    if (typeof refreshToken !== "string" || !refreshToken.trim()) {
-      return res.status(400).json({
-        message: "Refresh token is required"
-      });
-    }
-
     const result = await refreshUser(req.body.refreshToken);
 
     return res.status(200).json(result);
@@ -52,21 +45,12 @@ export async function refresh (req: Request, res: Response, next: NextFunction) 
   } catch (error) {
     next(error)
   }
+}
 
-
-};
 
 export async function logout(req: Request, res: Response, next: NextFunction) {
   try {
-    const { refreshToken } = req.body;
-
-    if (typeof refreshToken !== "string" || !refreshToken.trim()) {
-      return res.status(400).json({
-        message: "Refresh token is required"
-      });
-    }
-
-    await logoutUser(refreshToken);
+    await logoutUser(req.body.refreshToken);
 
     return res.status(200).json({
       message: "Logged out successfully"
@@ -75,5 +59,4 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
   } catch (error) {
     next(error)
   }
-
-};
+}
