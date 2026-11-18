@@ -8,7 +8,7 @@ const userRouter = Router()
 userRouter.get("/:id")
 
 userRouter.route("/me")
-  .patch((req, res) => {})
-  .delete(authenticate, userController.deleteProfile)
+  .patch(authenticate, userController.updateProfile)
+  .delete(authenticate, userController.deleteProfile);
 
 export default userRouter;

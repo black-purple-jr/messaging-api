@@ -14,7 +14,7 @@ export function generateRefreshToken(userId: string): string {
   return jwt.sign(
     { sub: userId },
     REFRESH_TOKEN_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "20d" }
   )
 }
 
