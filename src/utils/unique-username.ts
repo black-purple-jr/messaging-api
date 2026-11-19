@@ -1,4 +1,4 @@
-import UserModel from "@/models/User.model.js";
+import UserModel from "@/models/User.js";
 
 
 export default async function generateUniqueUsername(email: string) {

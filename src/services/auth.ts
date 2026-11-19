@@ -1,10 +1,10 @@
-import UserModel from "@/models/User.model.js";
+import UserModel from "@/models/User.js";
 import * as pwd from "@/utils/password.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/jwt.js";
 import { hashToken } from "@/utils/token-hash.js";
-import RefreshTokenModel from "@/models/RefreshToken.model.js";
+import RefreshTokenModel from "@/models/RefreshToken.js";
 import { verifyGoogleToken } from "@/utils/google-auth.js";
-import UserIdentityModel from "@/models/UserIdentity.model.js";
+import UserIdentityModel from "@/models/UserIdentity.js";
 import generateUniqueUsername from "@/utils/unique-username.js";
 
 

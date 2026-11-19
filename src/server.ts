@@ -1,10 +1,10 @@
 import express from "express";
 import morgan from "morgan";
-import authRouter from "@/routes/auth.router.js"
+import authRouter from "@/routes/auth.js"
 import connectDatabase from "@/config/database.js";
-import userRouter from "@/routes/user.router.js";
-import errorMiddleware from "@/middleware/error.middleware.js";
-import authenticate from "@/middleware/auth.middleware.js";
+import userRouter from "@/routes/user.js";
+import errorMiddleware from "@/middleware/error.js";
+import authenticate from "@/middleware/authenticate.js";
 import { PORT } from "@/config/env.js";
 
 const app = express();

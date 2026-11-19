@@ -1,9 +1,9 @@
-import UserModel from "@/models/User.model.js";
-import RefreshTokenModel from "@/models/RefreshToken.model.js";
-import UserIdentityModel from "@/models/UserIdentity.model.js";
+import UserModel from "@/models/User.js";
+import RefreshTokenModel from "@/models/RefreshToken.js";
+import UserIdentityModel from "@/models/UserIdentity.js";
 
 
-export async function deleteAccount (userId: string) {
+export async function deleteAccount(userId: string) {
   const user = await UserModel.findById(userId);
 
   if (!user) throw new Error("User not found");

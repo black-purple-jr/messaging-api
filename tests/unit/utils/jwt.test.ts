@@ -1,8 +1,8 @@
 
 import { describe, it, expect } from "vitest";
 import jwt from "jsonwebtoken";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../src/utils/jwt.js";
-import { JWT_SECRET, REFRESH_TOKEN_SECRET } from "../../src/config/env.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../../src/utils/jwt.js";
+import { JWT_SECRET, REFRESH_TOKEN_SECRET } from "../../../src/config/env.js";
 
 describe("JWT utilities", () => {
   const userId = "691234567890123456789012";

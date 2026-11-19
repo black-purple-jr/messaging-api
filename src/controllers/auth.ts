@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import * as authService from "@/services/auth.service.js";
+import * as authService from "@/services/auth.js";
 
 
 
@@ -21,15 +21,15 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 
 
 export async function login(req: Request, res: Response, next: NextFunction) {
-  
-  try{
+
+  try {
     const result = await authService.loginUser(
       req.body.identifier,
       req.body.password
     );
 
     return res.status(200).json(result);
-  } catch(error) {
+  } catch (error) {
     next(error)
   }
 }
@@ -48,7 +48,7 @@ export async function googleLogin(req: Request, res: Response, next: NextFunctio
 }
 
 
-export async function refresh (req: Request, res: Response, next: NextFunction) {
+export async function refresh(req: Request, res: Response, next: NextFunction) {
 
   try {
     const result = await authService.refreshUser(req.body.refreshToken);

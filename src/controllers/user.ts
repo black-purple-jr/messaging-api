@@ -1,4 +1,4 @@
-import { deleteAccount } from "@/services/user.service.js";
+import { deleteAccount } from "@/services/user.js";
 import type { Request, Response, NextFunction } from "express";
 
 
