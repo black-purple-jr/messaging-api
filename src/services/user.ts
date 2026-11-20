@@ -13,23 +13,31 @@ export async function getProfileData(userId: string) {
 }
 
 
-export async function updateProfile(userId: string, updates: { displayName?: string; picture?: string | null; }) {
-  const user = await UserModel.findByIdAndUpdate(
-    userId,
-    { $set: updates },
-    {
-      new: true,
-      runValidators: true
-    }
-  );
+export async function updateProfile(userId: string, updates: { username?: string; displayName?: string; avatar?: string | null; }) {
+  const user = await UserModel.findById(userId);
 
   if (!user) {
     throw new AppError("User not found", 404);
   }
 
+  if (updates.username && updates.username !== user.username) {
+    const existingUser = await UserModel.findOne({
+      username: updates.username
+    });
+
+    if (existingUser) {
+      throw new AppError("Username is already taken", 409);
+    }
+  }
+
+  Object.assign(user, updates);
+
+  await user.save();
+
   return {
     id: user.id,
     username: user.username,
+    email: user.email,
     displayName: user.displayName,
     avatar: user.avatar
   };
