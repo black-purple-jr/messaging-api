@@ -107,7 +107,7 @@ export async function googleLogin(idToken: string) {
     // 3. Retrieve the associated application user
     user = await UserModel.findById(identity.userId);
 
-    if (!user) throw new AppError("Associated user account not found.", 401);
+    if (!user) throw new Error("Google identity references a non-existent user.");
   } else {
     // 4. Check whether the email already belongs to another account
     const email = googleUser.email.toLowerCase().trim();
