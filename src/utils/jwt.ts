@@ -20,7 +20,13 @@ export function generateRefreshToken(userId: string): string {
 }
 
 export function verifyRefreshToken(token: string): string {
-  const payload = jwt.verify(token, REFRESH_TOKEN_SECRET);
+  let payload;
+
+  try {
+    payload = jwt.verify(token, REFRESH_TOKEN_SECRET);
+  } catch {
+    throw new AppError("Invalid or expired refresh token", 401);
+  }
 
   if (typeof payload === "string" || typeof payload.sub !== "string") {
     throw new AppError("Invalid refresh token", 401);

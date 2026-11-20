@@ -38,7 +38,24 @@ export async function updateProfile(userId: string, updates: { username?: string
 
   Object.assign(user, updates);
 
-  await user.save();
+  try {
+    await user.save();
+  } catch (error: unknown) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === 11000 &&
+      "keyPattern" in error &&
+      error.keyPattern &&
+      typeof error.keyPattern === "object" &&
+      "username" in error.keyPattern
+    ) {
+      throw new AppError("Username is already taken", 409);
+    }
+
+    throw error;
+  }
 
   return {
     id: user.id,
