@@ -6,6 +6,7 @@ import RefreshTokenModel from "@/models/RefreshToken.js";
 import { verifyGoogleToken } from "@/utils/google-auth.js";
 import UserIdentityModel from "@/models/UserIdentity.js";
 import generateUniqueUsername from "@/utils/unique-username.js";
+import AppError from "@/utils/app-error.js";
 
 
 
@@ -19,7 +20,7 @@ export async function registerUser(email: string, username: string, password: st
     ]
   });
 
-  if (userExists) throw new Error("User already exists, try logging in");
+  if (userExists) throw new AppError("User already exists, try logging in", 409);
 
   // When the email or the username aren't registered, a new user is created
 
@@ -55,11 +56,11 @@ export async function loginUser(identifier: string, password: string) {
     ]
   }).select("+passwordHash");
 
-  if (!user || !user.passwordHash) throw new Error("Invalid credentials");
+  if (!user || !user.passwordHash) throw new AppError("Invalid credentials", 401);
 
   const isPasswordValid = await pwd.verifyPassword(password, user.passwordHash);
 
-  if (!isPasswordValid) throw new Error("Invalid credentials");
+  if (!isPasswordValid) throw new AppError("Invalid credentials", 401);
 
   const accessToken: string = generateAccessToken(user._id.toString());
   const refreshToken: string = generateRefreshToken(user._id.toString());
@@ -92,7 +93,7 @@ export async function googleLogin(idToken: string) {
   // 1. Verify Google ID token
   const googleUser = await verifyGoogleToken(idToken);
 
-  if (!googleUser.email || googleUser.emailVerified !== true) throw new Error("Google account must have a verified email.");
+  if (!googleUser.email || googleUser.emailVerified !== true) throw new AppError("Google account must have a verified email.", 401);
 
   // 2. Find existing Google identity
   let identity = await UserIdentityModel.findOne({
@@ -106,13 +107,13 @@ export async function googleLogin(idToken: string) {
     // 3. Retrieve the associated application user
     user = await UserModel.findById(identity.userId);
 
-    if (!user) throw new Error("Associated user account not found.");
+    if (!user) throw new AppError("Associated user account not found.", 401);
   } else {
     // 4. Check whether the email already belongs to another account
     const email = googleUser.email.toLowerCase().trim();
     const existingUser = await UserModel.findOne({ email: email });
 
-    if (existingUser) throw new Error("An account with this email already exists. Sign in using your existing method.");
+    if (existingUser) throw new AppError("An account with this email already exists. Sign in using your existing method.", 409);
 
     // 5. Generate a unique username
     const username = await generateUniqueUsername(email);
@@ -180,7 +181,7 @@ export async function refreshUser(refreshToken: string) {
     { new: false }
   );
 
-  if (!oldToken) throw new Error("Invalid refresh token");
+  if (!oldToken) throw new AppError("Invalid refresh token", 401);
 
   const newRefreshTokenHash = hashToken(newRefreshToken);
   const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000);

@@ -9,7 +9,13 @@ export async function getProfileData(userId: string) {
 
   if (!user) throw new AppError("User not found", 404);
 
-  return user.toJSON()
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    displayName: user.displayName,
+    avatar: user.avatar
+  };
 }
 
 
