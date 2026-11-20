@@ -1,13 +1,19 @@
 import type { ErrorRequestHandler } from "express";
+import AppError from "@/utils/app-error.js";
 
 
 const errorMiddleware: ErrorRequestHandler = (error, req, res, next) => {
+  if (error instanceof AppError) {
+    return res.status(error.statusCode).json({
+      message: error.message
+    });
+  }
+
   console.error(error);
 
-  res.status(500).json({
+  return res.status(500).json({
     message: "Internal server error"
   });
-
 };
 
 export default errorMiddleware;

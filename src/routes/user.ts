@@ -1,14 +1,15 @@
-import Router from "express";
+import { Router } from "express";
 import authenticate from "@/middleware/authenticate.js";
 import * as userController from "@/controllers/user.js"
 
 
 const userRouter = Router()
 
-userRouter.get("/:id")
+userRouter.use(authenticate)
 
 userRouter.route("/me")
-  .patch(authenticate, userController.updateProfile)
-  .delete(authenticate, userController.deleteProfile);
+  .get(userController.getProfileData)
+  .patch(userController.updateProfile)
+  .delete(userController.deleteProfile);
 
 export default userRouter;

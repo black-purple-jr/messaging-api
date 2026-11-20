@@ -1,41 +1,9 @@
-import express from "express";
-import morgan from "morgan";
-import authRouter from "@/routes/auth.js"
+import app from "@/app.js";
 import connectDatabase from "@/config/database.js";
-import userRouter from "@/routes/user.js";
-import errorMiddleware from "@/middleware/error.js";
-import authenticate from "@/middleware/authenticate.js";
+import startServer from "./startup/start-server.js";
 import { PORT } from "@/config/env.js";
 
-const app = express();
-
-
-app.use(express.json());
-app.use(morgan('dev'));
-
-
-async function startServer() {
-  try {
-    await connectDatabase();
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error(`Failed to start the server : ${error}`);
-    process.exit(1);
-  }
-};
-
-app.use("/auth", authRouter);
-app.use("/u", authenticate, userRouter);
-
-
-app.get("/", (req, res) => {
-  res.json({ message: "Messaging API is running" });
+startServer().catch((error) => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
 });
-
-
-app.use(errorMiddleware);
-
-startServer();
