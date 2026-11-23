@@ -85,5 +85,16 @@ describe("JWT utilities", () => {
       expect(() => verifyRefreshToken(token))
         .toThrow();
     });
+
+    it("should reject a token without a valid sub claim", () => {
+      const token = jwt.sign(
+        { userId },
+        REFRESH_TOKEN_SECRET,
+        { expiresIn: "20d" }
+      );
+
+      expect(() => verifyRefreshToken(token))
+        .toThrow("Invalid refresh token");
+    });
   });
 });

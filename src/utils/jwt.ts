@@ -1,11 +1,12 @@
 import jwt from "jsonwebtoken";
+import { randomUUID } from "node:crypto";
 import { JWT_SECRET, REFRESH_TOKEN_SECRET } from "@/config/env.js";
 import AppError from "./app-error.js";
 
 
 export function generateAccessToken(userId: string): string {
   return jwt.sign(
-    { sub: userId },
+    { sub: userId, jti: randomUUID() },
     JWT_SECRET,
     { expiresIn: "20m" }
   )
@@ -13,7 +14,7 @@ export function generateAccessToken(userId: string): string {
 
 export function generateRefreshToken(userId: string): string {
   return jwt.sign(
-    { sub: userId },
+    { sub: userId, jti: randomUUID() },
     REFRESH_TOKEN_SECRET,
     { expiresIn: "20d" }
   )

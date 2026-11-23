@@ -41,6 +41,7 @@ export async function updateProfile(userId: string, updates: { username?: string
   try {
     await user.save();
   } catch (error: unknown) {
+    // checking if the username already exists in the MongoDB,
     if (
       error &&
       typeof error === "object" &&
