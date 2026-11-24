@@ -1,3 +1,4 @@
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import UserModel from "@/models/User.js";
@@ -5,15 +6,29 @@ import UserIdentityModel from "@/models/UserIdentity.js";
 import RefreshTokenModel from "@/models/RefreshToken.js";
 
 import * as pwd from "@/utils/password.js";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken }from "@/utils/jwt.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken
+} from "@/utils/jwt.js";
 import { hashToken } from "@/utils/token-hash.js";
 import { verifyGoogleToken } from "@/utils/google-auth.js";
 import generateUniqueUsername from "@/utils/unique-username.js";
 
-import { registerUser, loginUser, googleLogin, refreshUser,logoutUser } from "@/services/auth.js";
+import {
+  registerUser,
+  loginUser,
+  googleLogin,
+  refreshUser,
+  logoutUser
+} from "@/services/auth.js";
 import { deleteAccount } from "@/services/user.js";
 
-// Mock dependencies
+import * as userRepository from "@/repositories/user.js";
+import * as refreshTokenRepository from "@/repositories/refresh-token.js";
+import * as userIdentityRepository from "@/repositories/user-identity.js";
+
+// Mock Mongoose models used by the authentication service
 vi.mock("@/models/User.js", () => ({
   default: {
     exists: vi.fn(),
@@ -26,8 +41,7 @@ vi.mock("@/models/User.js", () => ({
 vi.mock("@/models/UserIdentity.js", () => ({
   default: {
     findOne: vi.fn(),
-    create: vi.fn(),
-    deleteMany: vi.fn()
+    create: vi.fn()
   }
 }));
 
@@ -35,11 +49,27 @@ vi.mock("@/models/RefreshToken.js", () => ({
   default: {
     create: vi.fn(),
     findOneAndUpdate: vi.fn(),
-    deleteOne: vi.fn(),
-    deleteMany: vi.fn()
+    deleteOne: vi.fn()
   }
 }));
 
+// Mock repositories used by the user service
+vi.mock("@/repositories/user.js", () => ({
+  findById: vi.fn(),
+  findByUsername: vi.fn(),
+  updateById: vi.fn(),
+  deleteById: vi.fn()
+}));
+
+vi.mock("@/repositories/refresh-token.js", () => ({
+  deleteByUserId: vi.fn()
+}));
+
+vi.mock("@/repositories/user-identity.js", () => ({
+  deleteByUserId: vi.fn()
+}));
+
+// Mock utilities
 vi.mock("@/utils/password.js", () => ({
   hashPassword: vi.fn(),
   verifyPassword: vi.fn()
@@ -74,8 +104,7 @@ describe("Authentication service", () => {
     email: "test@example.com",
     displayName: "Test User",
     avatar: null,
-    passwordHash: "hashed-password",
-    deleteOne: vi.fn()
+    passwordHash: "hashed-password"
   };
 
   const accessToken = "mock-access-token";
@@ -86,17 +115,14 @@ describe("Authentication service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock implementations
+    // Authentication model defaults
     vi.mocked(UserModel.exists).mockReturnValue(
       Promise.resolve(null) as never
     );
 
     vi.mocked(UserModel.create).mockResolvedValue(fakeUser as never);
 
-    vi.mocked(pwd.hashPassword).mockResolvedValue(
-      "hashed-password"
-    );
-
+    vi.mocked(pwd.hashPassword).mockResolvedValue("hashed-password");
     vi.mocked(pwd.verifyPassword).mockResolvedValue(true);
 
     vi.mocked(generateAccessToken).mockReturnValue(accessToken);
@@ -120,16 +146,25 @@ describe("Authentication service", () => {
 
     vi.mocked(RefreshTokenModel.deleteOne).mockResolvedValue({} as never);
 
-    vi.mocked(RefreshTokenModel.deleteMany).mockResolvedValue({} as never);
-
-    vi.mocked(UserIdentityModel.deleteMany).mockResolvedValue({} as never);
-
     vi.mocked(UserModel.findById).mockReturnValue(
       Promise.resolve(fakeUser) as never
     );
 
-    fakeUser.deleteOne.mockResolvedValue({} as never);
+    // User repository defaults
+    vi.mocked(userRepository.findById).mockResolvedValue(fakeUser as never);
 
+    vi.mocked(userRepository.deleteById).mockResolvedValue(fakeUser as never);
+
+    // Cleanup repository defaults
+    vi.mocked(refreshTokenRepository.deleteByUserId).mockResolvedValue(
+      {} as never
+    );
+
+    vi.mocked(userIdentityRepository.deleteByUserId).mockResolvedValue(
+      {} as never
+    );
+
+    // Google authentication defaults
     vi.mocked(verifyGoogleToken).mockResolvedValue({
       providerUserId: "google-user-123",
       email: "google@example.com",
@@ -488,30 +523,29 @@ describe("Authentication service", () => {
     it("should delete the user, refresh tokens, and linked identities", async () => {
       await deleteAccount(userId);
 
-      expect(UserModel.findById).toHaveBeenCalledWith(userId);
+      expect(userRepository.findById).toHaveBeenCalledWith(userId);
 
-      expect(RefreshTokenModel.deleteMany).toHaveBeenCalledWith({
-        userId: fakeUser._id
-      });
+      expect(refreshTokenRepository.deleteByUserId).toHaveBeenCalledWith(
+        userId
+      );
 
-      expect(UserIdentityModel.deleteMany).toHaveBeenCalledWith({
-        userId: fakeUser._id
-      });
+      expect(userIdentityRepository.deleteByUserId).toHaveBeenCalledWith(
+        userId
+      );
 
-      expect(fakeUser.deleteOne).toHaveBeenCalledOnce();
+      expect(userRepository.deleteById).toHaveBeenCalledWith(userId);
     });
 
     it("should reject if the user does not exist", async () => {
-      vi.mocked(UserModel.findById).mockReturnValue(
-        Promise.resolve(null) as never
-      );
+      vi.mocked(userRepository.findById).mockResolvedValue(null);
 
       await expect(
         deleteAccount(userId)
       ).rejects.toThrow("User not found");
 
-      expect(RefreshTokenModel.deleteMany).not.toHaveBeenCalled();
-      expect(UserIdentityModel.deleteMany).not.toHaveBeenCalled();
+      expect(refreshTokenRepository.deleteByUserId).not.toHaveBeenCalled();
+      expect(userIdentityRepository.deleteByUserId).not.toHaveBeenCalled();
+      expect(userRepository.deleteById).not.toHaveBeenCalled();
     });
   });
 });

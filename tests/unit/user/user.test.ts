@@ -1,31 +1,29 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import UserModel from "../../../src/models/User.js";
-import RefreshTokenModel from "../../../src/models/RefreshToken.js";
-import UserIdentityModel from "../../../src/models/UserIdentity.js";
+
+import * as userRepository from "@/repositories/user.js";
+import * as refreshTokenRepository from "@/repositories/refresh-token.js";
+import * as userIdentityRepository from "@/repositories/user-identity.js";
+
 import {
   getProfileData,
   updateProfile,
   deleteAccount
-} from "../../../src/services/user.js";
+} from "@/services/user.js";
 
-vi.mock("../../../src/models/User.js", () => ({
-  default: {
-    findById: vi.fn(),
-    findOne: vi.fn()
-  }
+vi.mock("@/repositories/user.js", () => ({
+  findById: vi.fn(),
+  findByUsername: vi.fn(),
+  updateById: vi.fn(),
+  deleteById: vi.fn()
 }));
 
-vi.mock("../../../src/models/RefreshToken.js", () => ({
-  default: {
-    deleteMany: vi.fn()
-  }
+vi.mock("@/repositories/refresh-token.js", () => ({
+  deleteByUserId: vi.fn()
 }));
 
-vi.mock("../../../src/models/UserIdentity.js", () => ({
-  default: {
-    deleteMany: vi.fn()
-  }
+vi.mock("@/repositories/user-identity.js", () => ({
+  deleteByUserId: vi.fn()
 }));
 
 describe("User service", () => {
@@ -37,9 +35,7 @@ describe("User service", () => {
     username: "testuser",
     email: "test@example.com",
     displayName: "Test User",
-    avatar: null,
-    save: vi.fn(),
-    deleteOne: vi.fn()
+    avatar: null
   };
 
   beforeEach(() => {
@@ -48,11 +44,12 @@ describe("User service", () => {
 
   describe("getProfileData", () => {
     it("should return the user's profile", async () => {
-      vi.mocked(UserModel.findById).mockResolvedValue(mockUser as never);
+      vi.mocked(userRepository.findById).mockResolvedValue(mockUser as never);
 
       const result = await getProfileData(userId);
 
-      expect(UserModel.findById).toHaveBeenCalledWith(userId);
+      expect(userRepository.findById).toHaveBeenCalledWith(userId);
+
       expect(result).toEqual({
         id: userId,
         username: "testuser",
@@ -63,7 +60,7 @@ describe("User service", () => {
     });
 
     it("should throw a 404 error when the user does not exist", async () => {
-      vi.mocked(UserModel.findById).mockResolvedValue(null);
+      vi.mocked(userRepository.findById).mockResolvedValue(null);
 
       await expect(getProfileData(userId)).rejects.toMatchObject({
         statusCode: 404
@@ -73,44 +70,53 @@ describe("User service", () => {
 
   describe("updateProfile", () => {
     it("should update the user's profile", async () => {
-      const updatedUser = { ...mockUser };
+      const updatedUser = {
+        ...mockUser,
+        displayName: "Updated Name"
+      };
 
-      vi.mocked(UserModel.findById).mockResolvedValue(updatedUser as never);
-      updatedUser.save.mockResolvedValue(updatedUser);
+      vi.mocked(userRepository.findById).mockResolvedValue(mockUser as never);
+      vi.mocked(userRepository.updateById).mockResolvedValue(updatedUser as never);
 
       const result = await updateProfile(userId, {
         displayName: "Updated Name"
       });
 
-      expect(updatedUser.displayName).toBe("Updated Name");
-      expect(updatedUser.save).toHaveBeenCalled();
+      expect(userRepository.updateById).toHaveBeenCalledWith(userId, {
+        displayName: "Updated Name"
+      });
+
       expect(result.displayName).toBe("Updated Name");
     });
 
     it("should throw a 404 error when the user does not exist", async () => {
-      vi.mocked(UserModel.findById).mockResolvedValue(null);
+      vi.mocked(userRepository.findById).mockResolvedValue(null);
 
       await expect(
         updateProfile(userId, { displayName: "Updated Name" })
       ).rejects.toMatchObject({ statusCode: 404 });
+
+      expect(userRepository.updateById).not.toHaveBeenCalled();
     });
 
     it("should throw a 409 error when the username is already taken", async () => {
-      vi.mocked(UserModel.findById).mockResolvedValue(mockUser as never);
-      vi.mocked(UserModel.findOne).mockResolvedValue({ _id: "another-user" } as never);
+      vi.mocked(userRepository.findById).mockResolvedValue(mockUser as never);
+      vi.mocked(userRepository.findByUsername).mockResolvedValue({
+        _id: "another-user"
+      } as never);
 
       await expect(
         updateProfile(userId, { username: "takenname" })
       ).rejects.toMatchObject({ statusCode: 409 });
+
+      expect(userRepository.updateById).not.toHaveBeenCalled();
     });
 
     it("should convert a duplicate username database error into a 409 error", async () => {
-      const updatedUser = { ...mockUser };
+      vi.mocked(userRepository.findById).mockResolvedValue(mockUser as never);
+      vi.mocked(userRepository.findByUsername).mockResolvedValue(null);
 
-      vi.mocked(UserModel.findById).mockResolvedValue(updatedUser as never);
-      vi.mocked(UserModel.findOne).mockResolvedValue(null);
-
-      updatedUser.save.mockRejectedValue({
+      vi.mocked(userRepository.updateById).mockRejectedValue({
         code: 11000,
         keyPattern: { username: 1 }
       });
@@ -121,11 +127,10 @@ describe("User service", () => {
     });
 
     it("should propagate unexpected database errors", async () => {
-      const updatedUser = { ...mockUser };
       const databaseError = new Error("Database connection failed");
 
-      vi.mocked(UserModel.findById).mockResolvedValue(updatedUser as never);
-      updatedUser.save.mockRejectedValue(databaseError);
+      vi.mocked(userRepository.findById).mockResolvedValue(mockUser as never);
+      vi.mocked(userRepository.updateById).mockRejectedValue(databaseError);
 
       await expect(
         updateProfile(userId, { displayName: "Updated Name" })
@@ -135,33 +140,29 @@ describe("User service", () => {
 
   describe("deleteAccount", () => {
     it("should delete the user's refresh tokens, identities, and account", async () => {
-      vi.mocked(UserModel.findById).mockResolvedValue(mockUser as never);
-      vi.mocked(RefreshTokenModel.deleteMany).mockResolvedValue({} as never);
-      vi.mocked(UserIdentityModel.deleteMany).mockResolvedValue({} as never);
-      mockUser.deleteOne.mockResolvedValue({} as never);
+      vi.mocked(userRepository.findById).mockResolvedValue(mockUser as never);
+
+      vi.mocked(refreshTokenRepository.deleteByUserId).mockResolvedValue({} as never);
+      vi.mocked(userIdentityRepository.deleteByUserId).mockResolvedValue({} as never);
+      vi.mocked(userRepository.deleteById).mockResolvedValue(mockUser as never);
 
       await deleteAccount(userId);
 
-      expect(RefreshTokenModel.deleteMany).toHaveBeenCalledWith({
-        userId: mockUser._id
-      });
-
-      expect(UserIdentityModel.deleteMany).toHaveBeenCalledWith({
-        userId: mockUser._id
-      });
-
-      expect(mockUser.deleteOne).toHaveBeenCalled();
+      expect(refreshTokenRepository.deleteByUserId).toHaveBeenCalledWith(userId);
+      expect(userIdentityRepository.deleteByUserId).toHaveBeenCalledWith(userId);
+      expect(userRepository.deleteById).toHaveBeenCalledWith(userId);
     });
 
     it("should throw a 404 error when the user does not exist", async () => {
-      vi.mocked(UserModel.findById).mockResolvedValue(null);
+      vi.mocked(userRepository.findById).mockResolvedValue(null);
 
       await expect(deleteAccount(userId)).rejects.toMatchObject({
         statusCode: 404
       });
 
-      expect(RefreshTokenModel.deleteMany).not.toHaveBeenCalled();
-      expect(UserIdentityModel.deleteMany).not.toHaveBeenCalled();
+      expect(refreshTokenRepository.deleteByUserId).not.toHaveBeenCalled();
+      expect(userIdentityRepository.deleteByUserId).not.toHaveBeenCalled();
+      expect(userRepository.deleteById).not.toHaveBeenCalled();
     });
   });
 });

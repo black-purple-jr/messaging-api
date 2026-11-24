@@ -1,5 +1,5 @@
-import RefreshTokenModel from "@/models/RefreshToken.js";
-import UserIdentityModel from "@/models/UserIdentity.js";
+import * as refreshTokenRepository from "@/repositories/refresh-token.js";
+import * as userIdentityRepository from "@/repositories/user-identity.js";
 import * as userRepository from "@/repositories/user.js";
 import AppError from "@/utils/app-error.js";
 
@@ -75,8 +75,8 @@ export async function deleteAccount(userId: string) {
 
   if (!user) throw new AppError("User not found", 404);
 
-  await RefreshTokenModel.deleteMany({ userId: user._id });
-  await UserIdentityModel.deleteMany({ userId: user._id });
+  await refreshTokenRepository.deleteByUserId(userId);
+  await userIdentityRepository.deleteByUserId(userId);
 
   await userRepository.deleteById(userId);
 
