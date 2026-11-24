@@ -1,6 +1,6 @@
-import UserModel from "@/models/User.js";
-import RefreshTokenModel from "@/models/RefreshToken.js";
-import UserIdentityModel from "@/models/UserIdentity.js";
+import * as userRepository from "@/repositories/user.js";
+import * as refreshTokenRepository from "@/repositories/refresh-token.js";
+import * as userIdentityRepository from "@/repositories/user-identity.js";
 
 import * as pwd from "@/utils/password.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/jwt.js";
@@ -14,12 +14,7 @@ import AppError from "@/utils/app-error.js";
 export async function registerUser(email: string, username: string, password: string, displayName: string) {
   // Checking if the user already exists
 
-  const userExists = await UserModel.exists({
-    $or: [
-      { email },
-      { username }
-    ]
-  });
+  const userExists = await userRepository.existsByEmailOrUsername(email, username);
 
   if (userExists) throw new AppError("User already exists, try logging in", 409);
 
@@ -27,7 +22,7 @@ export async function registerUser(email: string, username: string, password: st
 
   const passwordHash = await pwd.hashPassword(password);
 
-  const user = await UserModel.create({
+  const user = await userRepository.create({
     username,
     email,
     passwordHash,
@@ -50,12 +45,7 @@ export async function registerUser(email: string, username: string, password: st
 export async function loginUser(identifier: string, password: string) {
   // Checking if the user exists or not
 
-  const user = await UserModel.findOne({
-    $or: [
-      { email: identifier },
-      { username: identifier }
-    ]
-  }).select("+passwordHash");
+  const user = await userRepository.findByLoginIdentifier(identifier);
 
   if (!user || !user.passwordHash) throw new AppError("Invalid credentials", 401);
 
@@ -70,8 +60,8 @@ export async function loginUser(identifier: string, password: string) {
 
   const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000);
 
-  await RefreshTokenModel.create({
-    userId: user._id,
+  await refreshTokenRepository.create({
+    userId: user._id.toString(),
     tokenHash,
     expiresAt
   });
@@ -97,22 +87,19 @@ export async function googleLogin(idToken: string) {
   if (!googleUser.email || googleUser.emailVerified !== true) throw new AppError("Google account must have a verified email.", 401);
 
   // 2. Find existing Google identity
-  const identity = await UserIdentityModel.findOne({
-    provider: "google",
-    providerUserId: googleUser.providerUserId
-  });
+  const identity = await userIdentityRepository.findByProviderAndProviderUserId("google", googleUser.providerUserId);
 
   let user;
 
   if (identity) {
     // 3. Retrieve the associated application user
-    user = await UserModel.findById(identity.userId);
+    user = await userRepository.findById(identity.userId.toString());
 
     if (!user) throw new Error("Google identity references a non-existent user.");
   } else {
     // 4. Check whether the email already belongs to another account
     const email = googleUser.email.toLowerCase().trim();
-    const existingUser = await UserModel.findOne({ email: email });
+    const existingUser = await userRepository.findByEmail(email);
 
     if (existingUser) throw new AppError("An account with this email already exists. Sign in using your existing method.", 409);
 
@@ -120,7 +107,7 @@ export async function googleLogin(idToken: string) {
     const username = await generateUniqueUsername(email);
 
     // 6. Create application user
-    user = await UserModel.create({
+    user = await userRepository.create({
       username: username,
       email: email,
       displayName: googleUser.displayName || username,
@@ -128,8 +115,8 @@ export async function googleLogin(idToken: string) {
     });
 
     // 7. Link Google identity to application user
-    await UserIdentityModel.create({
-      userId: user._id,
+    await userIdentityRepository.create({
+      userId: user._id.toString(),
       provider: "google",
       providerUserId: googleUser.providerUserId
     });
@@ -144,8 +131,8 @@ export async function googleLogin(idToken: string) {
 
   const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000);
 
-  await RefreshTokenModel.create({
-    userId: user._id,
+  await refreshTokenRepository.create({
+    userId: user._id.toString(),
     tokenHash: tokenHash,
     expiresAt: expiresAt
   });
@@ -172,22 +159,14 @@ export async function refreshUser(refreshToken: string) {
   const newRefreshToken = generateRefreshToken(userId);
 
   const oldTokenHash = hashToken(refreshToken);
-  const oldToken = await RefreshTokenModel.findOneAndUpdate({
-    tokenHash: oldTokenHash,
-    userId,
-    revokedAt: null,
-    expiresAt: { $gt: new Date() }
-  },
-    { $set: { revokedAt: new Date() } },
-    { returnDocument: "before" }
-  );
+  const oldToken = await refreshTokenRepository.revokeActiveToken(oldTokenHash, userId);
 
   if (!oldToken) throw new AppError("Invalid refresh token", 401);
 
   const newRefreshTokenHash = hashToken(newRefreshToken);
   const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000);
 
-  await RefreshTokenModel.create({
+  await refreshTokenRepository.create({
     userId,
     tokenHash: newRefreshTokenHash,
     expiresAt,
@@ -204,8 +183,5 @@ export async function refreshUser(refreshToken: string) {
 export async function logoutUser(refreshToken: string) {
   const tokenHash = hashToken(refreshToken);
 
-  await RefreshTokenModel.deleteOne({
-    tokenHash,
-    expiresAt: { $gt: new Date() }
-  });
+  await refreshTokenRepository.deleteByTokenHash(tokenHash);
 }
