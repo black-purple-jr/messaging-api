@@ -9,7 +9,7 @@ export function generateAccessToken(userId: string): string {
     { sub: userId, jti: randomUUID() },
     JWT_SECRET,
     { expiresIn: "20m" }
-  )
+  );
 }
 
 export function generateRefreshToken(userId: string): string {
@@ -17,7 +17,7 @@ export function generateRefreshToken(userId: string): string {
     { sub: userId, jti: randomUUID() },
     REFRESH_TOKEN_SECRET,
     { expiresIn: "20d" }
-  )
+  );
 }
 
 export function verifyRefreshToken(token: string): string {

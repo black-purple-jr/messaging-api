@@ -1,6 +1,7 @@
 import * as refreshTokenRepository from "@/repositories/refresh-token.js";
 import * as userIdentityRepository from "@/repositories/user-identity.js";
 import * as userRepository from "@/repositories/user.js";
+import type { UserUpdates } from "@/repositories/user.js";
 import AppError from "@/utils/app-error.js";
 
 
@@ -19,7 +20,7 @@ export async function getProfileData(userId: string) {
 }
 
 
-export async function updateProfile(userId: string, updates: userRepository.UserUpdates) {
+export async function updateProfile(userId: string, updates: UserUpdates) {
   const user = await userRepository.findById(userId);
 
   if (!user) {

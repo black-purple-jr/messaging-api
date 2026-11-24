@@ -14,7 +14,7 @@ export function validate(schema: z.ZodType) {
       });
     }
 
-    req.body = result.data
+    req.body = result.data;
 
     next();
   };

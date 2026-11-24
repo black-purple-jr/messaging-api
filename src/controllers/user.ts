@@ -38,8 +38,8 @@ export async function deleteProfile(req: Request, res: Response, next: NextFunct
 
   try {
     await userService.deleteAccount(userId);
-    return res.status(204).send()
+    return res.status(204).send();
   } catch (error) {
-    return next(error)
+    return next(error);
   }
 }

@@ -1,10 +1,11 @@
 import UserModel from "@/models/User.js";
+import RefreshTokenModel from "@/models/RefreshToken.js";
+import UserIdentityModel from "@/models/UserIdentity.js";
+
 import * as pwd from "@/utils/password.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/jwt.js";
 import { hashToken } from "@/utils/token-hash.js";
-import RefreshTokenModel from "@/models/RefreshToken.js";
 import { verifyGoogleToken } from "@/utils/google-auth.js";
-import UserIdentityModel from "@/models/UserIdentity.js";
 import generateUniqueUsername from "@/utils/unique-username.js";
 import AppError from "@/utils/app-error.js";
 
@@ -42,7 +43,7 @@ export async function registerUser(email: string, username: string, password: st
       displayName: user.displayName,
     }
 
-  }
+  };
 };
 
 
@@ -85,7 +86,7 @@ export async function loginUser(identifier: string, password: string) {
       email: user.email,
       displayName: user.displayName,
     }
-  }
+  };
 };
 
 
@@ -96,7 +97,7 @@ export async function googleLogin(idToken: string) {
   if (!googleUser.email || googleUser.emailVerified !== true) throw new AppError("Google account must have a verified email.", 401);
 
   // 2. Find existing Google identity
-  let identity = await UserIdentityModel.findOne({
+  const identity = await UserIdentityModel.findOne({
     provider: "google",
     providerUserId: googleUser.providerUserId
   });
@@ -127,7 +128,7 @@ export async function googleLogin(idToken: string) {
     });
 
     // 7. Link Google identity to application user
-    identity = await UserIdentityModel.create({
+    await UserIdentityModel.create({
       userId: user._id,
       provider: "google",
       providerUserId: googleUser.providerUserId
@@ -178,7 +179,7 @@ export async function refreshUser(refreshToken: string) {
     expiresAt: { $gt: new Date() }
   },
     { $set: { revokedAt: new Date() } },
-    { new: false }
+    { returnDocument: "before" }
   );
 
   if (!oldToken) throw new AppError("Invalid refresh token", 401);
@@ -190,12 +191,12 @@ export async function refreshUser(refreshToken: string) {
     userId,
     tokenHash: newRefreshTokenHash,
     expiresAt,
-  })
+  });
 
   return {
     accessToken: newAccessToken,
     refreshToken: newRefreshToken
-  }
+  };
 
 }
 

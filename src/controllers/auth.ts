@@ -30,7 +30,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
     return res.status(200).json(result);
   } catch (error) {
-    next(error)
+    next(error);
   }
 }
 
@@ -56,7 +56,7 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
     return res.status(200).json(result);
 
   } catch (error) {
-    next(error)
+    next(error);
   }
 }
 
@@ -70,6 +70,6 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
     });
 
   } catch (error) {
-    next(error)
+    next(error);
   }
 }
