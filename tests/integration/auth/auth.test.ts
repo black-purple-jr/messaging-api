@@ -18,12 +18,15 @@ async function createTestUser() {
     displayName: "Login User"
   };
 
-  await request(app)
+  const response = await request(app)
     .post("/auth/register")
     .send(userData);
 
+  expect(response.status).toBe(201);
+
   return userData;
 }
+
 
 describe("POST /auth/register", () => {
   it("should register a new user successfully", async () => {
