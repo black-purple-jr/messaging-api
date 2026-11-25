@@ -148,4 +148,25 @@ describe("loginUser()", () => {
 
     expect(refreshTokenRepository.create).not.toHaveBeenCalled();
   });
+
+  it("should normalize email addresses to lowercase", async () => {
+    await loginUser("TEST@EXAMPLE.COM", "password123");
+
+    expect(userRepository.findByLoginIdentifier)
+      .toHaveBeenCalledWith("test@example.com");
+  });
+
+  it("should trim whitespace from email addresses", async () => {
+    await loginUser("  test@example.com  ", "password123");
+
+    expect(userRepository.findByLoginIdentifier)
+      .toHaveBeenCalledWith("test@example.com");
+  });
+
+  it("should preserve username casing", async () => {
+    await loginUser("TestUser", "password123");
+
+    expect(userRepository.findByLoginIdentifier)
+      .toHaveBeenCalledWith("TestUser");
+  });
 });

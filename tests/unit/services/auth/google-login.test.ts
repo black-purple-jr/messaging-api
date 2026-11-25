@@ -190,4 +190,22 @@ describe("googleLogin()", () => {
     expect(userRepository.create).not.toHaveBeenCalled();
     expect(userIdentityRepository.create).not.toHaveBeenCalled();
   });
+
+  it("should reject an invalid Google ID token", async () => {
+    vi.mocked(verifyGoogleToken)
+      .mockRejectedValue(new Error("Invalid Google ID token"));
+
+    await expect(
+      googleLogin("invalid-google-id-token")
+    ).rejects.toMatchObject({
+      message: "Invalid or expired Google ID token.",
+      statusCode: 401
+    });
+
+    expect(userIdentityRepository.findByProviderAndProviderUserId)
+      .not.toHaveBeenCalled();
+
+    expect(userRepository.create)
+      .not.toHaveBeenCalled();
+  });
 });

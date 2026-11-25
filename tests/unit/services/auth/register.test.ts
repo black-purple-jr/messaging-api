@@ -88,4 +88,27 @@ describe("registerUser()", () => {
     expect(pwd.hashPassword).not.toHaveBeenCalled();
     expect(userRepository.create).not.toHaveBeenCalled();
   });
+
+  it("should reject registration when MongoDB reports a duplicate key", async () => {
+    vi.mocked(userRepository.create)
+      .mockRejectedValue({ code: 11000 });
+
+    await expect(
+      registerUser(
+        "test@example.com",
+        "testuser",
+        "password123",
+        "Test User"
+      )
+    ).rejects.toMatchObject({
+      message: "User already exists, try logging in",
+      statusCode: 409
+    });
+
+    expect(userRepository.existsByEmailOrUsername)
+      .toHaveBeenCalled();
+
+    expect(userRepository.create)
+      .toHaveBeenCalled();
+  });
 });

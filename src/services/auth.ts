@@ -8,6 +8,7 @@ import { hashToken } from "@/utils/token-hash.js";
 import { verifyGoogleToken } from "@/utils/google-auth.js";
 import generateUniqueUsername from "@/utils/unique-username.js";
 import AppError from "@/utils/app-error.js";
+import { isDuplicateKeyError } from "@/utils/database-error.js";
 
 
 
@@ -22,12 +23,22 @@ export async function registerUser(email: string, username: string, password: st
 
   const passwordHash = await pwd.hashPassword(password);
 
-  const user = await userRepository.create({
-    username,
-    email,
-    passwordHash,
-    displayName
-  });
+  let user;
+
+  try {
+    user = await userRepository.create({
+      username,
+      email,
+      passwordHash,
+      displayName
+    });
+  } catch (error) {
+    if (isDuplicateKeyError(error)) {
+      throw new AppError("User already exists, try logging in", 409);
+    }
+
+    throw error;
+  }
 
 
   return {
@@ -45,7 +56,13 @@ export async function registerUser(email: string, username: string, password: st
 export async function loginUser(identifier: string, password: string) {
   // Checking if the user exists or not
 
-  const user = await userRepository.findByLoginIdentifier(identifier);
+  const normalizedIdentifier = identifier.trim();
+
+  const loginIdentifier = normalizedIdentifier.includes("@")
+    ? normalizedIdentifier.toLowerCase()
+    : normalizedIdentifier;
+
+  const user = await userRepository.findByLoginIdentifier(loginIdentifier);
 
   if (!user || !user.passwordHash) throw new AppError("Invalid credentials", 401);
 
@@ -82,7 +99,13 @@ export async function loginUser(identifier: string, password: string) {
 
 export async function googleLogin(idToken: string) {
   // 1. Verify Google ID token
-  const googleUser = await verifyGoogleToken(idToken);
+  let googleUser;
+
+  try {
+    googleUser = await verifyGoogleToken(idToken);
+  } catch {
+    throw new AppError("Invalid or expired Google ID token.", 401);
+  }
 
   if (!googleUser.email || googleUser.emailVerified !== true) throw new AppError("Google account must have a verified email.", 401);
 
