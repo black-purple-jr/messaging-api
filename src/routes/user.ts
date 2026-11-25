@@ -6,7 +6,6 @@ import { updateProfileSchema } from "@/schemas/user.js";
 
 
 const userRouter = Router();
-
 userRouter.use(authenticate);
 
 userRouter.route("/me")

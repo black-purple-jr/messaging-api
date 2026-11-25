@@ -15,5 +15,5 @@ refreshTokenSchema.index(
 );
 
 
-const RefreshTokenModel = mongoose.model("RefreshToken", refreshTokenSchema);
-export default RefreshTokenModel;
+const RefreshToken = mongoose.model("RefreshToken", refreshTokenSchema);
+export default RefreshToken;

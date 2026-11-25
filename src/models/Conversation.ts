@@ -33,5 +33,5 @@ const conversationSchema = new Schema({
 
 
 
-const ConversationModel = mongoose.model("Conversation", conversationSchema);
-export default ConversationModel;
+const Conversation = mongoose.model("Conversation", conversationSchema);
+export default Conversation;

@@ -1,4 +1,4 @@
-import RefreshTokenModel from "@/models/RefreshToken.js";
+import RefreshToken from "@/models/RefreshToken.js";
 
 export type RefreshTokenCreationData = {
   userId: string,
@@ -7,15 +7,15 @@ export type RefreshTokenCreationData = {
 }
 
 export function deleteByUserId(userId: string) {
-  return RefreshTokenModel.deleteMany({ userId });
+  return RefreshToken.deleteMany({ userId });
 }
 
-export function create (data: RefreshTokenCreationData) {
-  return RefreshTokenModel.create(data);
+export function create(data: RefreshTokenCreationData) {
+  return RefreshToken.create(data);
 }
 
 export function revokeActiveToken(oldTokenHash: string, userId: string) {
-  return RefreshTokenModel.findOneAndUpdate({
+  return RefreshToken.findOneAndUpdate({
     tokenHash: oldTokenHash,
     userId: userId,
     revokedAt: null,
@@ -27,7 +27,7 @@ export function revokeActiveToken(oldTokenHash: string, userId: string) {
 }
 
 export function deleteByTokenHash(tokenHash: string) {
-  return RefreshTokenModel.deleteOne({
+  return RefreshToken.deleteOne({
     tokenHash,
     expiresAt: { $gt: new Date() }
   });

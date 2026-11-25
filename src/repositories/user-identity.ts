@@ -1,19 +1,19 @@
-import UserIdentityModel from "@/models/UserIdentity.js";
+import UserIdentity from "@/models/UserIdentity.js";
 
-export type UserIdentityData = { 
+export type UserIdentityData = {
   userId: string,
   provider: "google",
   providerUserId: string
- }
+}
 
 export function deleteByUserId(userId: string) {
-  return UserIdentityModel.deleteMany({ userId });
+  return UserIdentity.deleteMany({ userId });
 }
 
 export function findByProviderAndProviderUserId(provider: "google", providerUserId: string) {
-  return UserIdentityModel.findOne({ provider, providerUserId });
+  return UserIdentity.findOne({ provider, providerUserId });
 }
 
 export function create(identityData: UserIdentityData) {
-  return UserIdentityModel.create(identityData);
+  return UserIdentity.create(identityData);
 }

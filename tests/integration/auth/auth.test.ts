@@ -5,8 +5,8 @@ import jwt from "jsonwebtoken";
 
 import { REFRESH_TOKEN_SECRET } from "../../../src/config/env.js";
 import app from "../../../src/app.js";
-import UserModel from "../../../src/models/User.js";
-import RefreshTokenModel from "../../../src/models/RefreshToken.js";
+import User from "../../../src/models/User.js";
+import RefreshToken from "../../../src/models/RefreshToken.js";
 import { hashToken } from "../../../src/utils/token-hash.js";
 
 
@@ -55,7 +55,7 @@ describe("POST /auth/register", () => {
     expect(response.body.user.id).toBeDefined();
 
     // Verify that the user was actually saved in MongoDB
-    const userInDatabase = await UserModel.findOne({
+    const userInDatabase = await User.findOne({
       email: userData.email
     }).select("+passwordHash");
 
@@ -155,7 +155,7 @@ describe("POST /auth/login", () => {
     // Verify that the refresh token is stored as a hash
     const tokenHash = hashToken(response.body.refreshToken);
 
-    const storedToken = await RefreshTokenModel.findOne({
+    const storedToken = await RefreshToken.findOne({
       tokenHash
     });
 
@@ -240,7 +240,7 @@ describe("POST /auth/refresh", () => {
     // Verify that the old token was revoked
     const oldTokenHash = hashToken(oldRefreshToken);
 
-    const oldTokenInDatabase = await RefreshTokenModel.findOne({
+    const oldTokenInDatabase = await RefreshToken.findOne({
       tokenHash: oldTokenHash
     });
 
@@ -250,7 +250,7 @@ describe("POST /auth/refresh", () => {
     // Verify that the new token was stored as a hash
     const newTokenHash = hashToken(newRefreshToken);
 
-    const newTokenInDatabase = await RefreshTokenModel.findOne({
+    const newTokenInDatabase = await RefreshToken.findOne({
       tokenHash: newTokenHash
     });
 
@@ -332,7 +332,7 @@ describe("POST /auth/logout", () => {
     const tokenHash = hashToken(refreshToken);
 
     // Confirm that the token exists
-    const tokenBeforeLogout = await RefreshTokenModel.findOne({
+    const tokenBeforeLogout = await RefreshToken.findOne({
       tokenHash
     });
 
@@ -347,7 +347,7 @@ describe("POST /auth/logout", () => {
     expect(response.body.message).toBe("Logged out successfully");
 
     // Confirm that the token was deleted
-    const tokenAfterLogout = await RefreshTokenModel.findOne({
+    const tokenAfterLogout = await RefreshToken.findOne({
       tokenHash
     });
 

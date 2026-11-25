@@ -18,5 +18,5 @@ userIdentitySchema.index(
 );
 
 
-const UserIdentityModel = mongoose.model("UserIdentity", userIdentitySchema);
-export default UserIdentityModel;
+const UserIdentity = mongoose.model("UserIdentity", userIdentitySchema);
+export default UserIdentity;

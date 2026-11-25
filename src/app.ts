@@ -3,6 +3,8 @@ import morgan from "morgan";
 
 import authRouter from "@/routes/auth.js";
 import userRouter from "@/routes/user.js";
+import friendRequestRouter from "./routes/friend-request.js";
+
 import errorMiddleware from "@/middleware/error.js";
 
 
@@ -13,6 +15,8 @@ app.use(morgan("dev"));
 
 app.use("/auth", authRouter);
 app.use("/u", userRouter);
+
+app.use("/friend-request", friendRequestRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Messaging API is running" });

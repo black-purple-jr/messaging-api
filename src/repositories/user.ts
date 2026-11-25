@@ -1,4 +1,4 @@
-import UserModel from "@/models/User.js";
+import User from "@/models/User.js";
 
 export type UserUpdates = {
   username?: string;
@@ -15,15 +15,15 @@ export type UserCreationData = {
 };
 
 export function findById(userId: string) {
-  return UserModel.findById(userId);
+  return User.findById(userId);
 }
 
 export function findByUsername(username: string) {
-  return UserModel.findOne({ username });
+  return User.findOne({ username });
 }
 
 export function updateById(userId: string, updates: UserUpdates) {
-  return UserModel.findByIdAndUpdate(
+  return User.findByIdAndUpdate(
     userId,
     { $set: updates },
     {
@@ -34,11 +34,11 @@ export function updateById(userId: string, updates: UserUpdates) {
 }
 
 export function deleteById(userId: string) {
-  return UserModel.findByIdAndDelete(userId);
+  return User.findByIdAndDelete(userId);
 }
 
 export function existsByEmailOrUsername(email: string, username: string) {
-  return UserModel.exists({
+  return User.exists({
     $or: [
       { email },
       { username }
@@ -48,7 +48,7 @@ export function existsByEmailOrUsername(email: string, username: string) {
 }
 
 export function findByLoginIdentifier(identifier: string) {
-  return UserModel.findOne({
+  return User.findOne({
     $or: [
       { email: identifier },
       { username: identifier }
@@ -57,9 +57,9 @@ export function findByLoginIdentifier(identifier: string) {
 }
 
 export function findByEmail(email: string) {
-  return UserModel.findOne({ email });
+  return User.findOne({ email });
 }
 
 export function create(user: UserCreationData) {
-  return UserModel.create(user);
+  return User.create(user);
 }
