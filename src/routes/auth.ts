@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as authController from "@/controllers/auth.js";
-import { validate } from "@/middleware/validate.js";
+import  validate  from "@/middleware/validate.js";
 import { registerSchema, loginSchema, refreshSchema, logoutSchema, googleLoginSchema } from "@/schemas/auth.js";
 
 

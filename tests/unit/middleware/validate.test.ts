@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { z } from "zod";
 import type { Request, Response, NextFunction } from "express";
 
-import { validate } from "@/middleware/validate.js";
+import validate from "@/middleware/validate.js";
 
 describe("Validation middleware", () => {
   const schema = z.object({

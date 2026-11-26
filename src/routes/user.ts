@@ -1,7 +1,7 @@
 import { Router } from "express";
 import authenticate from "@/middleware/authenticate.js";
 import * as userController from "@/controllers/user.js";
-import { validate } from "@/middleware/validate.js";
+import validate from "@/middleware/validate.js";
 import { updateProfileSchema } from "@/schemas/user.js";
 
 
