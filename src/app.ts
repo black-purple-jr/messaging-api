@@ -3,7 +3,7 @@ import morgan from "morgan";
 
 import authRouter from "@/routes/auth.js";
 import userRouter from "@/routes/user.js";
-import friendRequestRouter from "./routes/friend-request.js";
+import friendRequestRouter from "@/routes/friend-request.js";
 
 import errorMiddleware from "@/middleware/error.js";
 
