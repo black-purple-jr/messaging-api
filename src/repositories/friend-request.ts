@@ -1,3 +1,4 @@
+import { type ClientSession } from "mongoose";
 import FriendRequest from "@/models/FriendRequest.js";
 
 export async function create(senderId: string, receiverId: string) {
@@ -34,4 +35,46 @@ export async function updateStatus(requestId: string, status: "accepted" | "reje
 
 export async function deleteById(requestId: string) {
   return FriendRequest.findByIdAndDelete(requestId);
+}
+
+
+export async function acceptPendingRequest(requestId: string, receiverId: string, session?: ClientSession) {
+  return FriendRequest.findOneAndUpdate(
+    {
+      _id: requestId,
+      receiverId,
+      status: "pending",
+    },
+    { status: "accepted" },
+    {
+      new: true,
+      runValidators: true,
+      ...(session ? { session } : {}),
+    }
+  );
+}
+
+
+export async function rejectPendingRequest(requestId: string, receiverId: string) {
+  return FriendRequest.findOneAndUpdate(
+    {
+      _id: requestId,
+      receiverId,
+      status: "pending",
+    },
+    { status: "rejected" },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+}
+
+
+export async function deletePendingRequest(requestId: string,senderId: string) {
+  return FriendRequest.findOneAndDelete({
+    _id: requestId,
+    senderId,
+    status: "pending",
+  });
 }
